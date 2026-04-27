@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Video Starter — Engage Video Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #070B14;
+      --surface:  rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.08);
+      --accent:   #6366F1;
+      --accent2:  #8B5CF6;
+      --gold:     #F59E0B;
+      --green:    #22C55E;
+      --red:      #EF4444;
+      --text:     #F9FAFB;
+      --muted:    #6B7280;
+      --border:   rgba(255,255,255,0.08);
+      --sel-bg:   rgba(99,102,241,0.15);
+      --sel-bd:   #6366F1;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── GLOW ORBS ────────────────────────────── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width:700px;height:700px;background:rgba(99,102,241,.07);top:-250px;right:-200px; }
+    .orb-2 { width:600px;height:600px;background:rgba(139,92,246,.05);bottom:-200px;left:-150px; }
+
+    /* ── PROGRESS BAR ─────────────────────────── */
+    #progressBar {
+      position: fixed; top:0; left:0; right:0; height:3px;
+      background: var(--border); z-index:200;
+    }
+    #progressFill {
+      height:100%; width:0;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── HEADER ───────────────────────────────── */
+    #header {
+      position: fixed; top:0; left:0; right:0;
+      padding: 22px 48px;
+      display: flex; justify-content:space-between; align-items:center;
+      z-index:100;
+    }
+    .logo {
+      font-size:12px; font-weight:700; letter-spacing:.14em;
+      text-transform:uppercase; color:var(--muted);
+    }
+    #stepLabel {
+      font-size:12px; color:var(--muted);
+      opacity:0; transition:opacity .3s;
+    }
+    #stepLabel.visible { opacity:1; }
+
+    /* ── SCREEN WRAPPER ───────────────────────── */
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 130px 48px 80px;
+      max-width: 780px;
+      margin: 0 auto;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .screen.active   { display: flex; }
+    .screen.visible  { opacity: 1; transform: translateY(0); }
+
+    /* ── INTRO ────────────────────────────────── */
+    .eyebrow {
+      font-size:11px; font-weight:700; letter-spacing:.18em;
+      text-transform:uppercase; color:var(--accent); margin-bottom:20px;
+    }
+    .intro-title {
+      font-family:'DM Serif Display',serif;
+      font-size: clamp(36px,5.5vw,60px);
+      line-height:1.12; margin-bottom:20px;
+      background:linear-gradient(145deg,#fff 40%,rgba(255,255,255,.55));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .intro-body {
+      font-size:17px; line-height:1.75; color:rgba(255,255,255,.55);
+      margin-bottom:48px; max-width:560px;
+    }
+
+    /* ── DATA POINT CARDS ─────────────────────── */
+    .data-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:14px; margin-bottom:52px;
+    }
+    .dp {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:14px; padding:22px 20px;
+      opacity:0; transform:translateY(10px);
+      transition:opacity .4s ease, transform .4s ease;
+    }
+    .dp.show { opacity:1; transform:translateY(0); }
+    .dp-stat {
+      font-size:28px; font-weight:800; color:var(--gold);
+      margin-bottom:8px; line-height:1;
+    }
+    .dp-text { font-size:13px; line-height:1.55; color:rgba(255,255,255,.5); }
+
+    /* ── DOT PROGRESS ─────────────────────────── */
+    .dots {
+      display:flex; gap:6px; margin-bottom:40px;
+    }
+    .dot {
+      width:6px; height:6px; border-radius:3px;
+      background:var(--border); transition:all .35s ease;
+    }
+    .dot.done   { background:rgba(99,102,241,.35); }
+    .dot.active { width:20px; background:var(--accent); }
+
+    /* ── QUESTION HEADER ──────────────────────── */
+    .q-meta { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+    .q-badge {
+      font-size:10px; font-weight:700; letter-spacing:.16em;
+      text-transform:uppercase; color:var(--accent);
+      background:rgba(99,102,241,.12); border:1px solid rgba(99,102,241,.25);
+      border-radius:20px; padding:4px 12px;
+    }
+    .q-num {
+      font-size:11px; color:var(--muted); font-weight:500;
+    }
+    .q-title {
+      font-family:'DM Serif Display',serif;
+      font-size:clamp(22px,3.8vw,34px);
+      line-height:1.22; margin-bottom:10px;
+    }
+    .q-sub {
+      font-size:14px; line-height:1.65; color:rgba(255,255,255,.45);
+      margin-bottom:32px; max-width:560px;
+    }
+
+    /* ── OPTION CARDS ─────────────────────────── */
+    .options { display:flex; flex-direction:column; gap:10px; margin-bottom:32px; }
+    .options.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+    .opt {
+      display:flex; align-items:center; gap:14px;
+      background:var(--surface); border:1.5px solid var(--border);
+      border-radius:10px; padding:14px 18px;
+      font-size:14px; color:rgba(255,255,255,.65);
+      cursor:pointer; user-select:none;
+      transition:background .18s, border-color .18s, color .18s;
+    }
+    .opt:hover { background:var(--surface2); border-color:rgba(255,255,255,.14); color:#fff; }
+    .opt.sel   { background:var(--sel-bg); border-color:var(--sel-bd); color:#fff; }
+
+    .ind {
+      width:18px; height:18px; flex-shrink:0;
+      border:2px solid rgba(255,255,255,.2); border-radius:50%;
+      transition:all .2s; display:flex; align-items:center; justify-content:center;
+    }
+    .opt.sel .ind { background:var(--accent); border-color:var(--accent); }
+    .opt.sel .ind::after { content:''; width:6px; height:6px; background:#fff; border-radius:50%; }
+
+    .box {
+      width:18px; height:18px; flex-shrink:0;
+      border:2px solid rgba(255,255,255,.2); border-radius:4px;
+      transition:all .2s; display:flex; align-items:center; justify-content:center;
+    }
+    .opt.sel .box { background:var(--accent); border-color:var(--accent); }
+    .opt.sel .box::after { content:'✓'; color:#fff; font-size:10px; font-weight:800; }
+
+    .opt-label { flex:1; }
+
+    /* ── DRAG-RANK ────────────────────────────── */
+    .dragrank-list {
+      display:flex; flex-direction:column; gap:8px; margin-bottom:32px;
+    }
+    .dragrank-item {
+      display:flex; align-items:center; gap:14px;
+      background:var(--surface); border:1.5px solid var(--border);
+      border-radius:10px; padding:14px 18px;
+      cursor:grab; user-select:none;
+      transition:background .18s, border-color .18s, transform .15s, box-shadow .18s;
+    }
+    .dragrank-item:hover {
+      background:var(--surface2);
+      border-color:rgba(255,255,255,.18);
+    }
+    .dragrank-item:active { cursor:grabbing; }
+    .dragrank-item.dragging {
+      opacity:.35; cursor:grabbing;
+      box-shadow:0 12px 30px rgba(0,0,0,.4);
+    }
+    .dragrank-item.drag-over {
+      border-color:var(--accent);
+      background:rgba(99,102,241,.12);
+      transform:scale(1.01);
+    }
+    .drag-handle {
+      color:rgba(255,255,255,.25); flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      width:18px; height:18px; transition:color .2s;
+    }
+    .dragrank-item:hover .drag-handle { color:rgba(255,255,255,.55); }
+    .drag-num {
+      width:28px; height:28px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:800;
+      box-shadow:0 2px 8px rgba(99,102,241,.35);
+    }
+    .drag-label {
+      font-size:14px; color:rgba(255,255,255,.85); flex:1;
+    }
+
+    /* ── RANK INDICATOR ───────────────────────── */
+    .rank-ind {
+      width:22px; height:22px; border-radius:50%; flex-shrink:0;
+      border:2px solid rgba(255,255,255,.18);
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:800; color:transparent;
+      transition:all .2s;
+    }
+    .opt.sel .rank-ind {
+      background:var(--accent); border-color:var(--accent); color:#fff;
+    }
+    .rank-hint {
+      font-size:12px; color:var(--muted); margin-bottom:16px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .rank-hint::before {
+      content:''; display:inline-block; width:6px; height:6px;
+      border-radius:50%; background:var(--accent); flex-shrink:0;
+    }
+
+    .pct-wrap { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+    .pct-input {
+      width:54px; background:rgba(255,255,255,.06);
+      border:1.5px solid rgba(255,255,255,.1); border-radius:7px;
+      padding:6px 8px; font-size:14px; font-weight:600;
+      color:var(--text); font-family:'Inter',sans-serif;
+      text-align:center; outline:none;
+      transition:border-color .2s, background .2s, opacity .2s;
+      -moz-appearance:textfield;
+    }
+    .pct-input::-webkit-inner-spin-button,
+    .pct-input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+    .pct-input:focus { border-color:var(--accent); background:rgba(99,102,241,.1); }
+    .pct-input:disabled { opacity:.22; cursor:not-allowed; }
+    .opt.sel .pct-input:not(:disabled) { border-color:rgba(99,102,241,.45); }
+    .pct-sym { font-size:13px; color:var(--muted); font-weight:600; }
+
+    /* ── SLIDER ───────────────────────────────── */
+    .slider-wrap { margin-bottom:32px; }
+    .slider-val {
+      font-size:52px; font-weight:800; color:var(--gold);
+      line-height:1; margin-bottom:4px; text-align:center;
+    }
+    .slider-val span { font-size:20px; font-weight:400; color:var(--muted); margin-left:4px; }
+    .slider-hint { text-align:center; font-size:12px; color:var(--muted); margin-bottom:20px; }
+
+    input[type=range] {
+      -webkit-appearance:none; appearance:none;
+      width:100%; height:5px; border-radius:5px; outline:none; cursor:pointer;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct,0%), rgba(255,255,255,.1) var(--pct,0%), rgba(255,255,255,.1) 100%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      box-shadow:0 0 12px rgba(99,102,241,.5); cursor:pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width:22px; height:22px; border:none; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+    }
+
+    .range-labels {
+      display:flex; justify-content:space-between;
+      font-size:11px; color:var(--muted); margin-top:10px;
+    }
+
+    /* ── DUAL SLIDER ──────────────────────────── */
+    .dual-wrap { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; }
+    .dual-item {}
+    .dual-label {
+      font-size:11px; font-weight:600; text-transform:uppercase;
+      letter-spacing:.1em; color:var(--muted); margin-bottom:12px; display:block;
+    }
+    .dual-val {
+      font-size:40px; font-weight:800; color:var(--gold);
+      line-height:1; margin-bottom:14px;
+    }
+    .dual-val span { font-size:18px; font-weight:400; color:var(--muted); }
+
+    /* ── YES / NO ─────────────────────────────── */
+    .yn-row { display:flex; gap:12px; margin-bottom:32px; }
+    .yn-btn {
+      flex:1; padding:22px; border-radius:12px;
+      border:1.5px solid var(--border); background:var(--surface);
+      color:rgba(255,255,255,.55); font-size:17px; font-weight:700;
+      cursor:pointer; font-family:'Inter',sans-serif;
+      transition:all .2s; text-align:center;
+    }
+    .yn-btn:hover { border-color:rgba(255,255,255,.2); color:#fff; }
+    .yn-btn.yes.sel { background:rgba(34,197,94,.12); border-color:var(--green); color:var(--green); }
+    .yn-btn.no.sel  { background:rgba(239,68,68,.12);  border-color:var(--red);   color:var(--red);   }
+
+    /* ── SUB YES/NO ───────────────────────────── */
+    .sub-yn-list { display:flex; flex-direction:column; gap:14px; margin-bottom:32px; }
+    .sub-yn-item {
+      display:flex; align-items:center; gap:16px;
+      background:var(--surface); border:1.5px solid var(--border);
+      border-radius:10px; padding:16px 18px;
+    }
+    .sub-yn-text { flex:1; font-size:14px; color:rgba(255,255,255,.7); line-height:1.5; }
+    .sub-btns { display:flex; gap:8px; flex-shrink:0; }
+    .sub-btn {
+      padding:6px 18px; border-radius:6px; border:1.5px solid var(--border);
+      background:transparent; color:var(--muted); font-size:12px; font-weight:600;
+      cursor:pointer; font-family:'Inter',sans-serif; transition:all .18s; white-space:nowrap;
+    }
+    .sub-btn.yes.sel { background:rgba(34,197,94,.12); border-color:var(--green); color:var(--green); }
+    .sub-btn.no.sel  { background:rgba(239,68,68,.12);  border-color:var(--red);   color:var(--red);   }
+
+    /* ── EXAMPLE CARDS ────────────────────────── */
+    .examples-block { margin-bottom:26px; }
+    .examples-label {
+      font-size:11px; font-weight:700; letter-spacing:.14em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:14px;
+    }
+    .examples-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+    }
+    .ex-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:14px; padding:18px 16px;
+      transition:border-color .25s, background .25s, transform .25s, box-shadow .25s;
+      display:flex; flex-direction:column; gap:14px;
+      min-height:130px;
+    }
+    .ex-card:hover {
+      border-color:rgba(99,102,241,.35);
+      background:rgba(99,102,241,.05);
+      transform:translateY(-2px);
+      box-shadow:0 8px 24px rgba(0,0,0,.25);
+    }
+    .ex-logo-wrap {
+      height:30px; display:flex; align-items:center;
+    }
+    .ex-logo {
+      height:24px; max-width:130px; width:auto;
+      object-fit:contain; opacity:.92;
+      filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
+    }
+    .ex-text-logo {
+      font-size:17px; font-weight:800; letter-spacing:-.02em;
+      font-family:'Inter',sans-serif; line-height:1;
+    }
+    .ex-msg {
+      font-size:13px; line-height:1.5;
+      color:rgba(255,255,255,.78); font-style:italic;
+    }
+    @media(max-width:780px){ .examples-grid { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:520px){ .examples-grid { grid-template-columns:1fr; } }
+
+    /* ── TEXTAREA ─────────────────────────────── */
+    textarea {
+      width:100%; background:var(--surface); border:1.5px solid var(--border);
+      border-radius:12px; padding:18px 20px; font-size:15px; color:var(--text);
+      font-family:'Inter',sans-serif; outline:none; resize:vertical;
+      min-height:130px; transition:border-color .2s; margin-bottom:32px;
+      line-height:1.6;
+    }
+    textarea:focus { border-color:var(--accent); }
+    textarea::placeholder { color:var(--muted); }
+
+    /* ── NAV BUTTONS ──────────────────────────── */
+    .nav { display:flex; align-items:center; gap:12px; }
+
+    .btn-back {
+      background:transparent; border:1.5px solid var(--border);
+      border-radius:10px; padding:13px 24px;
+      color:var(--muted); font-size:14px; font-weight:500;
+      cursor:pointer; font-family:'Inter',sans-serif; transition:all .2s;
+    }
+    .btn-back:hover { border-color:rgba(255,255,255,.2); color:#fff; }
+
+    .btn-next {
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border:none; border-radius:10px; padding:14px 28px;
+      color:#fff; font-size:14px; font-weight:600;
+      cursor:pointer; font-family:'Inter',sans-serif;
+      display:flex; align-items:center; gap:8px;
+      transition:transform .2s, box-shadow .2s, opacity .2s;
+    }
+    .btn-next:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 24px rgba(99,102,241,.35); }
+    .btn-next:disabled { opacity:.3; cursor:not-allowed; }
+
+    .btn-skip {
+      background:none; border:none; color:var(--muted); font-size:13px;
+      cursor:pointer; font-family:'Inter',sans-serif; padding:13px;
+      transition:color .2s; margin-left:auto;
+    }
+    .btn-skip:hover { color:#fff; }
+
+    /* ── COMPLETION ───────────────────────────── */
+    .check-circle {
+      width:72px; height:72px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex; align-items:center; justify-content:center;
+      font-size:30px; margin-bottom:32px;
+    }
+    .comp-title {
+      font-family:'DM Serif Display',serif;
+      font-size:clamp(28px,4.5vw,46px);
+      line-height:1.18; margin-bottom:16px;
+    }
+    .comp-body {
+      font-size:16px; line-height:1.75; color:rgba(255,255,255,.55);
+      margin-bottom:40px; max-width:520px;
+    }
+    .insight-card {
+      background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08));
+      border:1px solid rgba(99,102,241,.28); border-radius:14px;
+      padding:24px 28px; margin-bottom:36px;
+    }
+    .insight-label {
+      font-size:10px; font-weight:700; letter-spacing:.18em;
+      text-transform:uppercase; color:var(--accent); margin-bottom:10px;
+    }
+    .insight-text { font-size:15px; line-height:1.7; color:rgba(255,255,255,.82); }
+
+    .btn-primary {
+      display:inline-flex; align-items:center; gap:10px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff; border:none; border-radius:12px; padding:16px 32px;
+      font-size:15px; font-weight:600; cursor:pointer;
+      font-family:'Inter',sans-serif; transition:transform .2s, box-shadow .2s, opacity .2s;
+    }
+    .btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(99,102,241,.38); }
+    .btn-primary:disabled { opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; }
+    .btn-primary.success { background:linear-gradient(135deg,#22C55E,#16A34A); }
+    .btn-primary.error   { background:linear-gradient(135deg,#EF4444,#DC2626); }
+
+    .btn-secondary {
+      background:transparent; border:1.5px solid var(--border);
+      border-radius:12px; padding:14px 24px;
+      color:var(--muted); font-size:14px; font-weight:500;
+      cursor:pointer; font-family:'Inter',sans-serif;
+      transition:border-color .2s, color .2s;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn-secondary:hover { border-color:rgba(255,255,255,.2); color:#fff; }
+
+    .comp-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .comp-status {
+      margin-top:18px; font-size:13px;
+      color:var(--muted); min-height:18px; transition:color .2s;
+    }
+    .comp-status.success { color:#22C55E; }
+    .comp-status.error   { color:#EF4444; }
+
+    .spin {
+      display:inline-block; width:14px; height:14px;
+      border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+      border-radius:50%; animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .id-fields {
+      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+      margin-bottom:32px; max-width:520px;
+    }
+    .id-fields input {
+      background:var(--surface); border:1.5px solid var(--border);
+      border-radius:10px; padding:13px 16px; font-size:14px;
+      color:var(--text); font-family:'Inter',sans-serif; outline:none;
+      transition:border-color .2s;
+    }
+    .id-fields input:focus { border-color:var(--accent); }
+    .id-fields input::placeholder { color:var(--muted); }
+    .id-fields .full { grid-column:1 / -1; }
+    @media(max-width:620px){ .id-fields { grid-template-columns:1fr; } }
+
+    /* ── RESPONSIVE ───────────────────────────── */
+    @media(max-width:620px){
+      .screen { padding:110px 22px 70px; }
+      #header { padding:18px 22px; }
+      .data-grid { grid-template-columns:1fr; }
+      .options.grid2 { grid-template-columns:1fr; }
+      .dual-wrap { grid-template-columns:1fr; }
+      .yn-row { flex-direction:column; }
+      .sub-yn-item { flex-direction:column; align-items:flex-start; gap:12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div id="progressBar"><div id="progressFill"></div></div>
+
+<div id="header">
+  <div class="logo">Engage Video Group</div>
+  <div id="stepLabel"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     INTRO
+════════════════════════════════════════════ -->
+<div class="screen active" id="screen-intro">
+  <div class="eyebrow">Pre-Meeting Briefing</div>
+  <h1 class="intro-title">Let's make the most<br>of our time together.</h1>
+  <p class="intro-body">
+    Before we meet, we'd love for you to share a few quick data points. They'll help us be more organised and prepared and will help us to have a sharper, more valuable conversation — and help us to show you something genuinely useful in our meet up.
+  </p>
+
+  <div class="data-grid" id="dataGrid">
+    <div class="dp">
+      <div class="dp-stat">#1</div>
+      <div class="dp-text">Social media video is now the <strong>largest media channel by time usage</strong> in the world.</div>
+    </div>
+    <div class="dp">
+      <div class="dp-stat">3 hrs+</div>
+      <div class="dp-text">South Africans spend over 3 hours per day on social media — <strong>significantly above global average</strong>.</div>
+    </div>
+    <div class="dp">
+      <div class="dp-stat">Largest</div>
+      <div class="dp-text">Social is now the <strong>largest share of total media spend</strong> of any channel globally.</div>
+    </div>
+    <div class="dp">
+      <div class="dp-stat">30M+</div>
+      <div class="dp-text">More than <strong>30 million users</strong> on TikTok and Facebook in South Africa right now.</div>
+    </div>
+  </div>
+
+  <div class="id-fields">
+    <input type="text"  placeholder="Your name"     oninput="answers._name = this.value">
+    <input type="text"  placeholder="Company"       oninput="answers._company = this.value">
+    <input type="email" placeholder="Email address" class="full" oninput="answers._email = this.value">
+  </div>
+
+  <div>
+    <button class="btn-primary" onclick="startFlow()">
+      Begin Questionnaire
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Question screens injected by JS -->
+
+<!-- ════════════════════════════════════════════
+     COMPLETION
+════════════════════════════════════════════ -->
+<div class="screen" id="screen-complete">
+  <div class="check-circle">✓</div>
+  <div class="eyebrow">All done</div>
+  <h2 class="comp-title">Thank you for<br>your time.</h2>
+  <p class="comp-body">Your responses will help us prepare a focused, high-value session. We're looking forward to showing you exactly what's possible with your current ad spend.</p>
+  <div class="insight-card">
+    <div class="insight-label">Your personalised snapshot</div>
+    <div class="insight-text" id="insightText">Based on your responses, we'll have a tailored analysis ready for our meeting.</div>
+  </div>
+  <div class="comp-actions">
+    <button class="btn-primary" id="sendBtn" onclick="submitToSheet()">
+      Send to Engage Video Group
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l12-5-5 12-2-5-5-2z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="btn-secondary" onclick="copyAnswers()">
+      Copy responses
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 4H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="5" y="2" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+    </button>
+  </div>
+  <div class="comp-status" id="compStatus"></div>
+</div>
+
+<script>
+/* ── CONFIG ────────────────────────────────────────────────────────── */
+// Google Sheet endpoint (Apps Script Web App URL).
+//   1. Create a new Google Sheet
+//   2. Extensions → Apps Script, paste apps-script-snippet.js (saved alongside this file)
+//   3. Deploy → New deployment → Web app → Execute as "Me", Access "Anyone"
+//   4. Copy the deployment URL and paste it below
+const SHEETS_ENDPOINT = 'https://script.google.com/a/macros/engagevideogroup.com/s/AKfycbw6iEgE1L0yYTyzs5mqFvo3L5LL0X6gQOweu0CkRe4lK-h6NUFZ4GjdUPdEypCAyL0X6Q/exec';
+
+/* ── QUESTION DEFINITIONS ──────────────────────────────────────────── */
+const Q = [
+  {
+    id: 'spend',
+    cat: 'Spend Awareness',
+    n: 1,
+    title: 'Roughly what percentage of your total marketing budget is intentionally allocated to social video?',
+    sub: 'Include Meta (Facebook / Instagram), TikTok, and YouTube in your estimate.',
+    type: 'radio',
+    opts: ['0% – 10%','10% – 20%','20% – 30%','30% – 40%','40% – 50%','50% – 60%','60% – 70%'],
+    grid2: true,
+    req: true,
+  },
+  {
+    id: 'objective',
+    cat: 'Objective Clarity',
+    n: 2,
+    title: 'Roughly how much of that spend aims to drive which objective?',
+    sub: 'Select all that apply and add a rough percentage split for each.',
+    type: 'checkbox',
+    opts: ['Brand awareness','Product awareness','Positioning','Marketing messaging / conversion'],
+    pct: true,
+    req: true,
+  },
+  {
+    id: 'coreMessage',
+    cat: 'Message Clarity',
+    n: 3,
+    title: 'What is an example of a clean message you would like to land on behalf of your brand?',
+    sub: 'Keep it to one clear, simple sentence — the kind a viewer could repeat after a single watch.',
+    type: 'textarea',
+    placeholder: 'For our brand we want the whole market to know "...."',
+    examples: [
+      { brand:'Uber',         slug:'uber',     color:'FFFFFF', msg:'"We now have Uber Courier in SA"' },
+      { brand:'Spotify',      slug:'spotify',  color:'1DB954', msg:'"Spotify is best for music discovery"' },
+      { brand:'Virgin Active',slug:null,       textColor:'#E10A0A', msg:'"Virgin Active has so many different fitness options under one roof"' },
+      { brand:'Binance',      slug:'binance',  color:'F0B90B', msg:'"Binance is 4× bigger than any other crypto platform"' },
+      { brand:'Coca-Cola',    slug:'cocacola', color:'F40009', msg:'"Coke goes well with meals"' },
+      { brand:'Takealot',     slug:null,       textColor:'#0098DA', msg:'"Takealot same day delivery"' },
+    ],
+    req: false,
+  },
+  {
+    id: 'metrics',
+    cat: 'Measurement Reality',
+    n: 4,
+    title: 'What are the core metrics you use to evaluate success of brand-focused social video today?',
+    sub: 'Drag to reorder by priority — most important at the top.',
+    type: 'dragrank',
+    opts: ['Impressions','Views','Click-through rate (CTR)','Watch time / View duration','Reach','Engagement rate','Brand lift studies','Conversions / Sales'],
+    grid2: true,
+    req: true,
+  },
+  {
+    id: 'watchtime',
+    cat: 'Attention Truth',
+    n: 5,
+    title: 'What is the average watch time across your video campaigns on TikTok and Instagram?',
+    sub: 'Ask your ad account manager to list all ads and look at the average at the bottom of the table. Drag the slider to your number.',
+    type: 'slider',
+    min: 1, max: 5, def: 2, unit: 'seconds',
+    req: false,
+  },
+  {
+    id: 'brandAt',
+    cat: 'Brand Visibility',
+    n: 6,
+    title: 'In your typical video ads, at what point does your brand first clearly appear?',
+    sub: 'Think about your most recent campaigns — when does the logo, product, or brand name first show up?',
+    type: 'slider',
+    min: 0, max: 30, def: 5, unit: 'seconds in',
+    req: false,
+  },
+  {
+    id: 'messageAt',
+    cat: 'Message Delivery',
+    n: 7,
+    title: 'At what point in your videos is the core message from the brief completed?',
+    sub: 'How many seconds of view duration must a viewer watch to receive the full intended message? Choose a few recent videos and check when the message delivery is completed.',
+    type: 'slider',
+    min: 1, max: 90, def: 15, unit: 'seconds in',
+    req: false,
+  },
+  {
+    id: 'seeBrand',
+    cat: 'Drop-Off Reality',
+    n: 8,
+    title: 'Given that the average watch time on the average ad account is around 2 seconds, what percentage of your audience do you believe actually sees your brand in your average video?',
+    sub: 'Make an honest estimate based on what you know about your watch-time data.',
+    type: 'slider',
+    min: 0, max: 100, def: 40, unit: '%',
+    req: false,
+  },
+  {
+    id: 'seeMessage',
+    cat: 'Drop-Off Reality',
+    n: 9,
+    title: 'What percentage of your audience do you believe actually receives your full message?',
+    sub: 'Think about how many people watch long enough to reach your key message moment — like "Uber now has Uber Courier in South Africa".',
+    type: 'slider',
+    min: 0, max: 100, def: 20, unit: '%',
+    req: false,
+  },
+  {
+    id: 'delivering',
+    cat: 'Financial Framing',
+    n: 10,
+    title: 'What percentage of your current spend do you believe IS delivering against your core objective?',
+    sub: 'Let the numbers from your previous answers guide you here.',
+    type: 'slider',
+    min: 0, max: 100, def: 40, unit: '%',
+    req: false,
+  },
+  {
+    id: 'notDelivering',
+    cat: 'Financial Framing',
+    n: 11,
+    title: 'What percentage of your current spend do you believe is NOT delivering against your core objective?',
+    sub: 'Let the numbers from your previous answers guide you here.',
+    type: 'slider',
+    min: 0, max: 100, def: 60, unit: '%',
+    req: false,
+  },
+  {
+    id: 'measureGap',
+    cat: 'Measurement Gap',
+    n: 12,
+    title: 'Do you currently have a way to measure any of the following?',
+    sub: '',
+    type: 'subyn',
+    items: [
+      { key:'brandSeen',   text:'% of audience that sees the brand while still watching' },
+      { key:'msgReceived', text:'% of audience that receives the message' },
+      { key:'costPerMsg',  text:'Cost per branded second or cost per message delivered' },
+    ],
+    req: false,
+  },
+  {
+    id: 'impact',
+    cat: 'Impact Reframe',
+    n: 13,
+    title: 'If you could increase the percentage of your audience that actually receives your message by 3–5×, what would that be worth as a multiple on your ad spend?',
+    sub: 'Think about it in terms of campaign impact and the leverage of your existing ad spend.',
+    type: 'textarea',
+    placeholder: 'Share your thoughts here...',
+    req: false,
+  },
+  {
+    id: 'closing',
+    cat: 'Closing Question',
+    n: 14,
+    title: 'Would it be very useful to see exactly how much of your current spend is not delivering your brand or message — quantified per ad and then at your entire ad account level?',
+    sub: 'This is something we can show you with precision, in a live walkthrough.',
+    type: 'yn',
+    req: false,
+    optional: true,
+  },
+];
+
+/* ── STATE ─────────────────────────────────────────────────────────── */
+const answers = {};
+let current = -1; // -1 = intro
+
+/* ── BOOT ──────────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  buildScreens();
+  revealDataPoints();
+  showScreen(-1);
+});
+
+/* ── ANIMATE INTRO DATA POINTS ─────────────────────────────────────── */
+function revealDataPoints() {
+  document.querySelectorAll('.dp').forEach((el, i) => {
+    setTimeout(() => el.classList.add('show'), 300 + i * 160);
+  });
+}
+
+/* ── BUILD QUESTION SCREENS ────────────────────────────────────────── */
+function buildScreens() {
+  const body = document.body;
+  const completeScreen = document.getElementById('screen-complete');
+
+  // Pre-seed dragrank defaults so the Continue button isn't built disabled
+  Q.forEach((q) => {
+    if (q.type === 'dragrank') {
+      answers[q.id] = q.opts.map((_, i) => i);
+    }
+  });
+
+  Q.forEach((q, idx) => {
+    const div = document.createElement('div');
+    div.className = 'screen';
+    div.id = `screen-q${idx}`;
+    div.innerHTML = buildQuestionHTML(q, idx);
+    body.insertBefore(div, completeScreen);
+  });
+
+  // initialise slider states
+  Q.forEach((q, idx) => {
+    if (q.type === 'slider') initSlider(`sl-${idx}`, q.def, q.min, q.max);
+    if (q.type === 'dual') {
+      q.sliders.forEach((s, si) => initSlider(`sl-${idx}-${si}`, s.def, s.min, s.max));
+    }
+  });
+}
+
+function buildQuestionHTML(q, idx) {
+  const isFirst = idx === 0;
+  const isLast  = idx === Q.length - 1;
+  const total   = Q.length;
+
+  // dot progress
+  let dots = '';
+  for (let i = 0; i < total; i++) {
+    dots += `<div class="dot" id="dot-${idx}-${i}"></div>`;
+  }
+
+  let inputHTML = '';
+
+  if (q.type === 'radio') {
+    const cls = q.grid2 ? 'options grid2' : 'options';
+    inputHTML = `<div class="${cls}" id="opts-${idx}">` +
+      q.opts.map((o, oi) => `
+        <div class="opt" data-qi="${idx}" data-oi="${oi}" onclick="selectRadio(${idx},${oi})">
+          <div class="ind"></div><span>${o}</span>
+        </div>`).join('') +
+      `</div>`;
+  }
+
+  if (q.type === 'checkbox') {
+    const cls = q.grid2 ? 'options grid2' : 'options';
+    if (q.pct) {
+      inputHTML = `<div class="${cls}" id="opts-${idx}">` +
+        q.opts.map((o, oi) => `
+          <div class="opt" data-qi="${idx}" data-oi="${oi}" onclick="toggleCheck(${idx},${oi})">
+            <div class="box"></div>
+            <span class="opt-label">${o}</span>
+            <div class="pct-wrap">
+              <input type="number" class="pct-input" id="pct-${idx}-${oi}"
+                min="0" max="100" placeholder="—"
+                onclick="event.stopPropagation()"
+                oninput="savePct(${idx},${oi},this.value)"
+                disabled>
+              <span class="pct-sym">%</span>
+            </div>
+          </div>`).join('') +
+        `</div>`;
+    } else {
+      inputHTML = `<div class="${cls}" id="opts-${idx}">` +
+        q.opts.map((o, oi) => `
+          <div class="opt" data-qi="${idx}" data-oi="${oi}" onclick="toggleCheck(${idx},${oi})">
+            <div class="box"></div><span>${o}</span>
+          </div>`).join('') +
+        `</div>`;
+    }
+  }
+
+  if (q.type === 'rank') {
+    const cls = q.grid2 ? 'options grid2' : 'options';
+    inputHTML = `<div class="rank-hint">Click metrics in order of priority — most important first</div>
+      <div class="${cls}" id="opts-${idx}">` +
+      q.opts.map((o, oi) => `
+        <div class="opt" data-qi="${idx}" data-oi="${oi}" onclick="toggleRank(${idx},${oi})">
+          <div class="rank-ind" id="rank-${idx}-${oi}"></div>
+          <span>${o}</span>
+        </div>`).join('') +
+      `</div>`;
+  }
+
+  if (q.type === 'dragrank') {
+    inputHTML = `
+      <div class="rank-hint">Drag any item up or down to reflect your priority</div>
+      <div class="dragrank-list" id="drlist-${idx}">
+        ${q.opts.map((o, oi) => `
+          <div class="dragrank-item" draggable="true" data-oi="${oi}"
+               ondragstart="dragStart(event,${idx})"
+               ondragover="dragOver(event)"
+               ondragenter="dragEnter(event)"
+               ondragleave="dragLeave(event)"
+               ondrop="dragDrop(event,${idx})"
+               ondragend="dragEnd(event)">
+            <div class="drag-handle">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="6" cy="3" r="1.3"/><circle cx="10" cy="3" r="1.3"/>
+                <circle cx="6" cy="8" r="1.3"/><circle cx="10" cy="8" r="1.3"/>
+                <circle cx="6" cy="13" r="1.3"/><circle cx="10" cy="13" r="1.3"/>
+              </svg>
+            </div>
+            <div class="drag-num" id="drnum-${idx}-${oi}">${oi + 1}</div>
+            <div class="drag-label">${o}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  if (q.type === 'slider') {
+    const isPct = q.unit === '%';
+    const lMin  = isPct ? `${q.min}%` : `${q.min}s`;
+    const lMax  = isPct ? `${q.max}%` : `${q.max}s`;
+    inputHTML = `
+      <div class="slider-wrap">
+        <div class="slider-val" id="sv-${idx}">${q.def}<span>${q.unit}</span></div>
+        <div class="slider-hint">drag to adjust</div>
+        <input type="range" id="sl-${idx}" min="${q.min}" max="${q.max}" value="${q.def}"
+          oninput="updateSlider(this,'sv-${idx}','${q.unit}')">
+        <div class="range-labels"><span>${lMin}</span><span>${lMax}</span></div>
+      </div>`;
+  }
+
+  if (q.type === 'dual') {
+    inputHTML = `<div class="dual-wrap">` +
+      q.sliders.map((s, si) => `
+        <div class="dual-item">
+          <span class="dual-label">${s.label}</span>
+          <div class="dual-val" id="dsv-${idx}-${si}">${s.def}<span>%</span></div>
+          <input type="range" id="sl-${idx}-${si}" min="${s.min}" max="${s.max}" value="${s.def}"
+            oninput="updateDualSlider(this,'dsv-${idx}-${si}')">
+          <div class="range-labels"><span>0%</span><span>100%</span></div>
+        </div>`).join('') +
+      `</div>`;
+  }
+
+  if (q.type === 'yn') {
+    inputHTML = `
+      <div class="yn-row">
+        <button class="yn-btn yes" id="yn-yes-${idx}" onclick="selectYN(${idx},'yes')">Yes</button>
+        <button class="yn-btn no"  id="yn-no-${idx}"  onclick="selectYN(${idx},'no')">No</button>
+      </div>`;
+  }
+
+  if (q.type === 'subyn') {
+    inputHTML = `<div class="sub-yn-list">` +
+      q.items.map((item, ii) => `
+        <div class="sub-yn-item">
+          <div class="sub-yn-text">${item.text}</div>
+          <div class="sub-btns">
+            <button class="sub-btn yes" id="synb-${idx}-${ii}-yes" onclick="selectSubYN(${idx},${ii},'yes')">Yes</button>
+            <button class="sub-btn no"  id="synb-${idx}-${ii}-no"  onclick="selectSubYN(${idx},${ii},'no')">No</button>
+          </div>
+        </div>`).join('') +
+      `</div>`;
+  }
+
+  if (q.type === 'textarea') {
+    let examplesHTML = '';
+    if (q.examples && q.examples.length) {
+      examplesHTML = `
+        <div class="examples-block">
+          <div class="examples-label">Examples we have landed with billions of people around the world</div>
+          <div class="examples-grid">
+            ${q.examples.map(ex => {
+              const logo = ex.slug
+                ? `<img src="https://cdn.simpleicons.org/${ex.slug}/${ex.color || 'FFFFFF'}" class="ex-logo" alt="${ex.brand}">`
+                : `<div class="ex-text-logo" style="color:${ex.textColor || '#fff'}">${ex.brand}</div>`;
+              return `
+                <div class="ex-card">
+                  <div class="ex-logo-wrap">${logo}</div>
+                  <div class="ex-msg">${ex.msg}</div>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }
+    inputHTML = examplesHTML +
+      `<textarea id="ta-${idx}" placeholder="${q.placeholder}" oninput="answers['${q.id}'] = this.value"></textarea>`;
+  }
+
+  const optionalBadge = q.optional ? ' <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:8px">optional</span>' : '';
+
+  return `
+    <div class="dots" id="dots-${idx}">${dots}</div>
+    <div class="q-meta">
+      <span class="q-badge">${q.cat}</span>
+      <span class="q-num">Question ${q.n} of ${total}</span>
+    </div>
+    <h2 class="q-title">${q.title}${optionalBadge}</h2>
+    <p class="q-sub">${q.sub}</p>
+    ${inputHTML}
+    <div class="nav">
+      ${!isFirst ? `<button class="btn-back" onclick="goBack()">← Back</button>` : ''}
+      <button class="btn-next" id="btn-next-${idx}" onclick="goNext()" ${q.req && !isAnswered(q) ? 'disabled' : ''}>
+        ${isLast ? 'Submit' : 'Continue'}
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      ${!q.req ? `<button class="btn-skip" onclick="goNext()">Skip</button>` : ''}
+    </div>`;
+}
+
+/* ── SLIDER INIT & UPDATE ──────────────────────────────────────────── */
+function initSlider(id, val, min, max) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const pct = ((val - min) / (max - min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+}
+
+function updateSlider(el, valId, unit) {
+  const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+  const display = document.getElementById(valId);
+  if (display) display.innerHTML = `${el.value}<span>${unit}</span>`;
+  // find which question index this belongs to
+  const parts = el.id.split('-');
+  const qi = parseInt(parts[1]);
+  answers[Q[qi].id] = parseInt(el.value);
+}
+
+function updateDualSlider(el, valId) {
+  const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+  el.style.setProperty('--pct', pct + '%');
+  const display = document.getElementById(valId);
+  if (display) display.innerHTML = `${el.value}<span>%</span>`;
+  const parts = el.id.split('-'); // sl-qi-si
+  const qi = parseInt(parts[1]);
+  const si = parseInt(parts[2]);
+  const q = Q[qi];
+  if (!answers[q.id]) answers[q.id] = {};
+  answers[q.id][q.sliders[si].key] = parseInt(el.value);
+}
+
+/* ── INPUT HANDLERS ────────────────────────────────────────────────── */
+function selectRadio(qi, oi) {
+  const q = Q[qi];
+  answers[q.id] = q.opts[oi];
+  document.querySelectorAll(`#opts-${qi} .opt`).forEach((el, i) => {
+    el.classList.toggle('sel', i === oi);
+  });
+  updateNextBtn(qi);
+}
+
+function toggleCheck(qi, oi) {
+  const q = Q[qi];
+  if (!answers[q.id]) answers[q.id] = [];
+  const label = q.opts[oi];
+  const arr = answers[q.id];
+  const idx2 = q.pct
+    ? arr.findIndex(a => a.label === label)
+    : arr.indexOf(label);
+  const optEl = document.querySelectorAll(`#opts-${qi} .opt`)[oi];
+
+  if (idx2 === -1) {
+    arr.push(q.pct ? { label, pct: null } : label);
+    optEl.classList.add('sel');
+    if (q.pct) {
+      const inp = document.getElementById(`pct-${qi}-${oi}`);
+      if (inp) inp.disabled = false;
+    }
+  } else {
+    arr.splice(idx2, 1);
+    optEl.classList.remove('sel');
+    if (q.pct) {
+      const inp = document.getElementById(`pct-${qi}-${oi}`);
+      if (inp) { inp.disabled = true; inp.value = ''; }
+    }
+  }
+  updateNextBtn(qi);
+}
+
+function selectYN(qi, val) {
+  const q = Q[qi];
+  answers[q.id] = val;
+  document.getElementById(`yn-yes-${qi}`).classList.toggle('sel', val === 'yes');
+  document.getElementById(`yn-no-${qi}`).classList.toggle('sel', val === 'no');
+  updateNextBtn(qi);
+}
+
+function selectSubYN(qi, ii, val) {
+  const q = Q[qi];
+  if (!answers[q.id]) answers[q.id] = {};
+  answers[q.id][q.items[ii].key] = val;
+  ['yes','no'].forEach(v => {
+    document.getElementById(`synb-${qi}-${ii}-${v}`).classList.toggle('sel', v === val);
+  });
+}
+
+function savePct(qi, oi, val) {
+  const q = Q[qi];
+  const label = q.opts[oi];
+  if (!answers[q.id]) return;
+  const item = answers[q.id].find(a => typeof a === 'object' && a.label === label);
+  if (item) item.pct = val !== '' ? parseInt(val) : null;
+}
+
+function toggleRank(qi, oi) {
+  const q = Q[qi];
+  if (!answers[q.id]) answers[q.id] = []; // ordered array of option indices
+  const arr = answers[q.id];
+  const pos = arr.indexOf(oi);
+
+  if (pos === -1) {
+    arr.push(oi);
+  } else {
+    arr.splice(pos, 1);
+  }
+
+  // refresh all badges
+  q.opts.forEach((_, i) => {
+    const optEl = document.querySelectorAll(`#opts-${qi} .opt`)[i];
+    const badge = document.getElementById(`rank-${qi}-${i}`);
+    const rank  = arr.indexOf(i);
+    if (rank === -1) {
+      optEl.classList.remove('sel');
+      badge.textContent = '';
+    } else {
+      optEl.classList.add('sel');
+      badge.textContent = rank + 1;
+    }
+  });
+
+  updateNextBtn(qi);
+}
+
+/* ── DRAG-RANK HANDLERS ────────────────────────────────────────────── */
+let dragState = { qi: null, sourceOI: null };
+
+function dragStart(e, qi) {
+  dragState.qi = qi;
+  dragState.sourceOI = parseInt(e.currentTarget.dataset.oi);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(dragState.sourceOI)); } catch(_){}
+}
+
+function dragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function dragEnter(e) {
+  const item = e.currentTarget;
+  if (item.classList.contains('dragrank-item') &&
+      parseInt(item.dataset.oi) !== dragState.sourceOI) {
+    item.classList.add('drag-over');
+  }
+}
+
+function dragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function dragDrop(e, qi) {
+  e.preventDefault();
+  const targetOI = parseInt(e.currentTarget.dataset.oi);
+  const sourceOI = dragState.sourceOI;
+  e.currentTarget.classList.remove('drag-over');
+  if (sourceOI === null || sourceOI === targetOI) return;
+
+  const order = answers[Q[qi].id];
+  const sourcePos = order.indexOf(sourceOI);
+  const targetPos = order.indexOf(targetOI);
+  order.splice(sourcePos, 1);
+  order.splice(targetPos, 0, sourceOI);
+  renderDragRank(qi);
+}
+
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragState = { qi: null, sourceOI: null };
+}
+
+function renderDragRank(qi) {
+  const q = Q[qi];
+  const list = document.getElementById(`drlist-${qi}`);
+  if (!list) return;
+  const order = answers[q.id];
+  // Reorder DOM nodes by appending in priority order
+  order.forEach((oi, rank) => {
+    const item = list.querySelector(`[data-oi="${oi}"]`);
+    if (item) list.appendChild(item);
+    const num = document.getElementById(`drnum-${qi}-${oi}`);
+    if (num) num.textContent = rank + 1;
+  });
+}
+
+/* ── VALIDATION ────────────────────────────────────────────────────── */
+function isAnswered(q) {
+  const a = answers[q.id];
+  if (!a) return false;
+  if (Array.isArray(a)) return a.length > 0;
+  return true;
+}
+
+function updateNextBtn(qi) {
+  const q = Q[qi];
+  const btn = document.getElementById(`btn-next-${qi}`);
+  if (!btn || !q.req) return;
+  btn.disabled = !isAnswered(q);
+}
+
+/* ── SLIDER DEFAULT CAPTURE ────────────────────────────────────────── */
+function captureSliderDefaults() {
+  Q.forEach((q, idx) => {
+    if (q.type === 'slider') {
+      const el = document.getElementById(`sl-${idx}`);
+      if (el && answers[q.id] === undefined) answers[q.id] = parseInt(el.value);
+      // update display
+      const sv = document.getElementById(`sv-${idx}`);
+      if (sv && el) sv.innerHTML = `${el.value}<span>${q.unit}</span>`;
+    }
+  });
+}
+
+/* ── NAVIGATION ────────────────────────────────────────────────────── */
+function startFlow() {
+  current = 0;
+  showScreen(0);
+}
+
+function goNext() {
+  if (current < Q.length - 1) {
+    current++;
+    showScreen(current);
+  } else {
+    captureSliderDefaults();
+    showCompletion();
+  }
+}
+
+function goBack() {
+  if (current > 0) {
+    current--;
+    showScreen(current);
+  } else {
+    current = -1;
+    showScreen(-1);
+  }
+}
+
+/* ── SCREEN TRANSITION ─────────────────────────────────────────────── */
+function showScreen(idx) {
+  // hide all
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active','visible');
+  });
+
+  let target;
+  if (idx === -1)           target = document.getElementById('screen-intro');
+  else if (idx === 'done')  target = document.getElementById('screen-complete');
+  else                      target = document.getElementById(`screen-q${idx}`);
+
+  if (!target) return;
+  target.classList.add('active');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => target.classList.add('visible'));
+  });
+
+  // progress
+  const total = Q.length;
+  const step  = idx === -1 ? 0 : idx === 'done' ? total : idx;
+  const pct   = idx === -1 ? 0 : ((step) / total) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  const label = document.getElementById('stepLabel');
+  if (idx >= 0 && idx !== 'done') {
+    label.textContent = `${idx + 1} / ${total}`;
+    label.classList.add('visible');
+  } else {
+    label.classList.remove('visible');
+  }
+
+  // update dots
+  if (idx >= 0 && idx !== 'done') {
+    for (let i = 0; i < total; i++) {
+      const dot = document.getElementById(`dot-${idx}-${i}`);
+      if (!dot) continue;
+      dot.classList.remove('active','done');
+      if (i < idx) dot.classList.add('done');
+      else if (i === idx) dot.classList.add('active');
+    }
+  }
+
+  // scroll to top
+  window.scrollTo({ top: 0 });
+}
+
+/* ── COMPLETION ────────────────────────────────────────────────────── */
+function showCompletion() {
+  document.getElementById('insightText').innerHTML = buildInsight();
+  showScreen('done');
+  document.getElementById('progressFill').style.width = '100%';
+}
+
+function buildInsight() {
+  const parts = [];
+
+  const spend = answers['spend'];
+  if (spend) parts.push(`You're directing approximately <strong>${spend}</strong> of your total budget into social video.`);
+
+  const sb = answers['seeBrand'];
+  const sm = answers['seeMessage'];
+  if (sb !== undefined || sm !== undefined) {
+    const sbVal = sb ?? 40;
+    const smVal = sm ?? 20;
+    parts.push(`Based on your estimates, around <strong>${sbVal}%</strong> of your audience actually sees your brand, and just <strong>${smVal}%</strong> receives your full message.`);
+    if (smVal < 30) {
+      parts.push(`That means the <strong>majority of your ad spend</strong> may be working harder than the audience it's reaching can justify.`);
+    }
+  }
+
+  const notDel = answers['notDelivering'];
+  if (notDel !== undefined) {
+    parts.push(`You estimate roughly <strong>${notDel}%</strong> of spend is not delivering against your core objective — that's a number we can help you reduce.`);
+  }
+
+  if (answers['closing'] === 'yes') {
+    parts.push(`We'll have a <strong>live ad account breakdown</strong> ready for our session, showing exactly where your spend is and isn't converting attention into brand impact.`);
+  }
+
+  if (parts.length === 0) {
+    return "Based on your responses, we'll prepare a tailored analysis ready for our meeting.";
+  }
+
+  return parts.join(' ');
+}
+
+/* ── FORMAT ANSWERS FOR PAYLOAD ───────────────────────────────────── */
+function formatAnswerValue(q, a) {
+  if (a === undefined || a === null || a === '') return '(skipped)';
+  if (typeof a === 'string' || typeof a === 'number') return String(a);
+  if (Array.isArray(a)) {
+    if (q.type === 'rank' || q.type === 'dragrank') {
+      return a.map((oi, r) => `${r + 1}. ${q.opts[oi]}`).join(' | ');
+    }
+    if (a.length > 0 && typeof a[0] === 'object' && 'label' in a[0]) {
+      return a.map(it => `${it.label}${it.pct != null ? ' (' + it.pct + '%)' : ''}`).join(', ');
+    }
+    return a.join(', ');
+  }
+  if (typeof a === 'object') {
+    return Object.entries(a).map(([k, v]) => `${k}: ${v}`).join(', ');
+  }
+  return String(a);
+}
+
+function buildPayload() {
+  const payload = {
+    Submitted: new Date().toLocaleString(),
+    Name:    answers._name    || '',
+    Company: answers._company || '',
+    Email:   answers._email   || '',
+  };
+  Q.forEach(q => {
+    payload[`Q${q.n}. ${q.cat}`] = formatAnswerValue(q, answers[q.id]);
+  });
+  return payload;
+}
+
+/* ── SUBMIT TO GOOGLE SHEET ───────────────────────────────────────── */
+async function submitToSheet() {
+  const btn    = document.getElementById('sendBtn');
+  const status = document.getElementById('compStatus');
+
+  if (SHEETS_ENDPOINT.includes('REPLACE_WITH_YOUR_ID')) {
+    status.className = 'comp-status error';
+    status.textContent = 'Sheet endpoint not configured yet. Update SHEETS_ENDPOINT in the file.';
+    return;
+  }
+
+  captureSliderDefaults();
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Sending...';
+  status.className = 'comp-status';
+  status.textContent = '';
+
+  try {
+    // Apps Script Web Apps require no-cors mode from a browser. We can't read the
+    // response, but the POST does land. text/plain avoids a CORS preflight.
+    await fetch(SHEETS_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(buildPayload()),
+    });
+    btn.classList.add('success');
+    btn.innerHTML = '✓ Sent successfully';
+    status.className = 'comp-status success';
+    status.textContent = "We've received your responses. We'll be in touch shortly.";
+  } catch (err) {
+    btn.classList.add('error');
+    btn.innerHTML = 'Send failed — try again';
+    btn.disabled = false;
+    status.className = 'comp-status error';
+    status.textContent = `Couldn't send: ${err.message}. Please use "Copy responses" and email manually.`;
+  }
+}
+
+/* ── COPY SUMMARY ──────────────────────────────────────────────────── */
+function copyAnswers() {
+  const lines = ['SOCIAL VIDEO STARTER — PRE-MEETING RESPONSES', '─'.repeat(48), ''];
+  Q.forEach(q => {
+    const a = answers[q.id];
+    lines.push(`[${q.n}] ${q.cat.toUpperCase()}`);
+    lines.push(q.title);
+    if (a === undefined || a === null || a === '') {
+      lines.push('  → (skipped)');
+    } else if (typeof a === 'string') {
+      lines.push(`  → ${a}`);
+    } else if (Array.isArray(a)) {
+      if (q.type === 'rank' || q.type === 'dragrank') {
+        // a = ordered array of option indices
+        a.forEach((oi, rank) => lines.push(`  ${rank + 1}. ${q.opts[oi]}`));
+      } else if (a.length > 0 && typeof a[0] === 'object' && 'label' in a[0]) {
+        a.forEach(item => lines.push(`  → ${item.label}${item.pct != null ? ': ' + item.pct + '%' : ''}`));
+      } else {
+        lines.push(`  → ${a.join(', ')}`);
+      }
+    } else if (typeof a === 'object') {
+      Object.entries(a).forEach(([k, v]) => lines.push(`  ${k}: ${v}`));
+    } else {
+      lines.push(`  → ${a}`);
+    }
+    lines.push('');
+  });
+
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('#screen-complete .btn-primary');
+    const orig = btn.innerHTML;
+    btn.innerHTML = 'Copied! ✓';
+    btn.style.background = 'linear-gradient(135deg,#22C55E,#16A34A)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2200);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+</script>
+</body>
+</html>
